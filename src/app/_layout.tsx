@@ -1,6 +1,7 @@
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 
 import { ThemeProvider } from '@react-navigation/native';
+import Constants from 'expo-constants';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import * as React from 'react';
@@ -25,16 +26,24 @@ export const unstable_settings = {
 
 hydrateAuth();
 loadSelectedTheme();
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
-// Set the animation options. This is optional.
-SplashScreen.setOptions({
-  duration: 500,
-  fade: true,
-});
+
+const isExpoGo = Constants.appOwnership === 'expo';
+
+if (!isExpoGo) {
+  // Prevent the splash screen from auto-hiding before asset loading is complete.
+  SplashScreen.preventAutoHideAsync();
+  // Set the animation options. This is optional.
+  SplashScreen.setOptions({
+    duration: 500,
+    fade: true,
+  });
+}
 
 export default function RootLayout() {
   React.useEffect(() => {
+    if (isExpoGo)
+      return;
+
     const timer = setTimeout(() => {
       SplashScreen.hideAsync().catch(() => {
         // no-op: splash may already be hidden

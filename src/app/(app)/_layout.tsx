@@ -15,22 +15,34 @@ import { useIsFirstTime } from '@/lib/hooks/use-is-first-time';
 export default function TabLayout() {
   const status = useAuth.use.status();
   const [isFirstTime] = useIsFirstTime();
+  const [startupTimedOut, setStartupTimedOut] = React.useState(false);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setStartupTimedOut(true);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const effectiveStatus = status === 'idle' && startupTimedOut ? 'signOut' : status;
+
   const hideSplash = useCallback(async () => {
     await SplashScreen.hideAsync();
   }, []);
+
   useEffect(() => {
-    if (status !== 'idle') {
+    if (effectiveStatus !== 'idle') {
       const timer = setTimeout(() => {
         hideSplash();
       }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [hideSplash, status]);
+  }, [effectiveStatus, hideSplash]);
 
   if (isFirstTime) {
     return <Redirect href="/onboarding" />;
   }
-  if (status === 'signOut') {
+  if (effectiveStatus === 'signOut') {
     return <Redirect href="/login" />;
   }
   return (
