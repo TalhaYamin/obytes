@@ -30,25 +30,23 @@ loadSelectedTheme();
 const isExpoGo = Constants.appOwnership === 'expo';
 
 if (!isExpoGo) {
-  // Prevent the splash screen from auto-hiding before asset loading is complete.
   SplashScreen.preventAutoHideAsync();
-  // Set the animation options. This is optional.
   SplashScreen.setOptions({
-    duration: 500,
+    duration: 300,
     fade: true,
   });
 }
 
+/** Brief hold after JS is up so the splash does not flash off before the first screen paints. */
+const SPLASH_HIDE_MS = 400;
+
 export default function RootLayout() {
   React.useEffect(() => {
-    if (isExpoGo)
-      return;
-
     const timer = setTimeout(() => {
       SplashScreen.hideAsync().catch(() => {
         // no-op: splash may already be hidden
       });
-    }, 1500);
+    }, SPLASH_HIDE_MS);
 
     return () => clearTimeout(timer);
   }, []);

@@ -1,6 +1,6 @@
-import { Link, Redirect, SplashScreen, Tabs } from 'expo-router';
+import { Link, Redirect, Tabs } from 'expo-router';
 import * as React from 'react';
-import { useCallback, useEffect } from 'react';
+import { useEffect } from 'react';
 
 import { Pressable, Text } from '@/components/ui';
 import {
@@ -12,38 +12,30 @@ import {
 import { useAuthStore as useAuth } from '@/features/auth/use-auth-store';
 import { useIsFirstTime } from '@/lib/hooks/use-is-first-time';
 
+/** Short grace in case a future async hydrate leaves status `idle` briefly on first paint. */
+const IDLE_RESOLVE_MS = 400;
+
 export default function TabLayout() {
   const status = useAuth.use.status();
   const [isFirstTime] = useIsFirstTime();
-  const [startupTimedOut, setStartupTimedOut] = React.useState(false);
+  const [idleGraceDone, setIdleGraceDone] = React.useState(false);
 
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      setStartupTimedOut(true);
-    }, 2000);
+  useEffect(() => {
+    const timer = setTimeout(() => setIdleGraceDone(true), IDLE_RESOLVE_MS);
     return () => clearTimeout(timer);
   }, []);
 
-  const effectiveStatus = status === 'idle' && startupTimedOut ? 'signOut' : status;
-
-  const hideSplash = useCallback(async () => {
-    await SplashScreen.hideAsync();
-  }, []);
-
-  useEffect(() => {
-    if (effectiveStatus !== 'idle') {
-      const timer = setTimeout(() => {
-        hideSplash();
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [effectiveStatus, hideSplash]);
+  const effectiveStatus
+    = status === 'idle' && !idleGraceDone ? 'idle' : status === 'idle' ? 'signOut' : status;
 
   if (isFirstTime) {
     return <Redirect href="/onboarding" />;
   }
   if (effectiveStatus === 'signOut') {
     return <Redirect href="/login" />;
+  }
+  if (effectiveStatus === 'idle') {
+    return null;
   }
   return (
     <Tabs>
